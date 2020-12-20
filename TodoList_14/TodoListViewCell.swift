@@ -16,7 +16,8 @@ class TodoListViewCell: UITableViewCell {
     
     @IBOutlet weak var contentLabel: UILabel!
     
-    
+    //MARK:- Life Cycle
+
     override func awakeFromNib() {
         super.awakeFromNib()
         
