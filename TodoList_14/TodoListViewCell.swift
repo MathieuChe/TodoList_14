@@ -14,6 +14,8 @@ class TodoListViewCell: UITableViewCell {
     // Define the reuseIdentifier of the tableviewcell
     static let reuseIdentifier: String = "TodoListViewCell"
     
+    //MARK:- Properties IBOutlet
+
     @IBOutlet weak var contentLabel: UILabel!
     
     //MARK:- Life Cycle
