@@ -15,29 +15,53 @@ class TodoListViewController: UITableViewController {
     // If we need to append some string in the itemArray, we have to use var
     private var itemArray: [String] = ["find Mike", "find Mathieu", "find Swann", "find Raymonde"]
     
+    // To store the userDefault key
+    private var forKeyString: String = "TodoListArray"
+    
+    // Persistence data base: Create an interface to the user’s defaults database, where you store key-value pairs persistently across launches of your app.
+    let userDefault: NSObject = UserDefaults.standard
+    
     //MARK:- Life Cycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Set the itemArray to userDefault value for the property identified by a given key "TodoListArray as an array of string. But we need to prevent the case our itemArray is not empty cause if it is, the app will crash by using guard let else {return}
+        guard let items = userDefault.value(forKey: forKeyString) as? [String] else {return}
+        
+        // Then set the value of items to itemArray
+        itemArray = items
+        
+        setUpNavigationDisplay()
+        
+        // Allow multiple selection of the tableview
+        tableView.allowsMultipleSelection = true
+        
+        view.insetsLayoutMarginsFromSafeArea = false
+//        view.translatesAutoresizingMaskIntoConstraints = false
+        
+        
+    }
+    
+    //MARK:- Navigation
+
+    func setUpNavigationDisplay() {
+                
         // Set the title of the navigation item
         navigationItem.title = "TodoList"
-        
-        // Set the bar Tint of the navigationController
-        navigationController?.navigationBar.barTintColor = .init(red: 0.8, green: 0.5, blue: 0.5, alpha: 0.6)
         
         // Set the title Tint Color of the navigationController
         navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : UIColor.white]
         
+        // Set the bar Tint of the navigationController
+        navigationController?.navigationBar.barTintColor = .init(red: 0.8, green: 0.5, blue: 0.5, alpha: 0.6)
+    
         // Allow to customize a bar button item that displays on the right. UIBarButtonItem is a specialized button for placement on a toolbar or tab bar, in our example it's an add button
         // The target is the item itself and the selector is the add(sender:) from the @objc func add(sender: UIBarButtonItem) {} created
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonPressed(sender:)))
         
         // Set the add button to white color
         navigationItem.rightBarButtonItem?.tintColor = .white
-        
-        // Allow multiple selection of the tableview
-        tableView.allowsMultipleSelection = true
         
     }
 
@@ -133,6 +157,9 @@ class TodoListViewController: UITableViewController {
             
             // Can push the text from the alertTexfield by using the local variable textField in the itemArray. We can force it because the textField.text will never be equal to nil
                 self.itemArray.append(textField.text!)
+                
+                // Sets the property of the receiver specified by a given key forKeyString as "TodoListArray" to a given value "itemArray"
+                self.userDefault.setValue(self.itemArray, forKey: self.forKeyString)
             
             // Reload the rows and sections of the table view to show immediately the new item
             self.tableView.reloadData()
