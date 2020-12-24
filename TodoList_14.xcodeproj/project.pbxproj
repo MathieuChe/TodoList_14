@@ -14,6 +14,7 @@
 		4E18EBB7258EA3D300FD44C5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E18EBB6258EA3D300FD44C5 /* Assets.xcassets */; };
 		4E18EBBA258EA3D300FD44C5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4E18EBB8258EA3D300FD44C5 /* LaunchScreen.storyboard */; };
 		4EE373F0258EAA9C0084856F /* TodoListViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EE373EF258EAA9C0084856F /* TodoListViewCell.swift */; };
+		4EE373F725949D2B0084856F /* Items.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EE373F625949D2B0084856F /* Items.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		4E18EBB9258EA3D300FD44C5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		4E18EBBB258EA3D300FD44C5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4EE373EF258EAA9C0084856F /* TodoListViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoListViewCell.swift; sourceTree = "<group>"; };
+		4EE373F625949D2B0084856F /* Items.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Items.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,16 +60,65 @@
 		4E18EBAC258EA3D100FD44C5 /* TodoList_14 */ = {
 			isa = PBXGroup;
 			children = (
-				4E18EBAD258EA3D100FD44C5 /* AppDelegate.swift */,
-				4E18EBAF258EA3D100FD44C5 /* SceneDelegate.swift */,
-				4E18EBB1258EA3D100FD44C5 /* TodoListViewController.swift */,
-				4E18EBB3258EA3D100FD44C5 /* Main.storyboard */,
+				4EE373F92594A0EB0084856F /* Delegates */,
+				4EE373FC2594A1060084856F /* Controllers */,
+				4EE373FB2594A0F70084856F /* Storyboards */,
 				4E18EBB6258EA3D300FD44C5 /* Assets.xcassets */,
-				4E18EBB8258EA3D300FD44C5 /* LaunchScreen.storyboard */,
-				4E18EBBB258EA3D300FD44C5 /* Info.plist */,
-				4EE373EF258EAA9C0084856F /* TodoListViewCell.swift */,
+				4EE374012594A1410084856F /* Supporting Files */,
+				4EE373FE2594A10E0084856F /* Views */,
+				4EE374002594A1150084856F /* Data Model */,
 			);
 			path = TodoList_14;
+			sourceTree = "<group>";
+		};
+		4EE373F92594A0EB0084856F /* Delegates */ = {
+			isa = PBXGroup;
+			children = (
+				4E18EBAD258EA3D100FD44C5 /* AppDelegate.swift */,
+				4E18EBAF258EA3D100FD44C5 /* SceneDelegate.swift */,
+			);
+			path = Delegates;
+			sourceTree = "<group>";
+		};
+		4EE373FB2594A0F70084856F /* Storyboards */ = {
+			isa = PBXGroup;
+			children = (
+				4E18EBB3258EA3D100FD44C5 /* Main.storyboard */,
+				4E18EBB8258EA3D300FD44C5 /* LaunchScreen.storyboard */,
+			);
+			path = Storyboards;
+			sourceTree = "<group>";
+		};
+		4EE373FC2594A1060084856F /* Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				4E18EBB1258EA3D100FD44C5 /* TodoListViewController.swift */,
+			);
+			path = Controllers;
+			sourceTree = "<group>";
+		};
+		4EE373FE2594A10E0084856F /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				4EE373EF258EAA9C0084856F /* TodoListViewCell.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		4EE374002594A1150084856F /* Data Model */ = {
+			isa = PBXGroup;
+			children = (
+				4EE373F625949D2B0084856F /* Items.swift */,
+			);
+			path = "Data Model";
+			sourceTree = "<group>";
+		};
+		4EE374012594A1410084856F /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				4E18EBBB258EA3D300FD44C5 /* Info.plist */,
+			);
+			path = "Supporting Files";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -141,6 +192,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4E18EBB2258EA3D100FD44C5 /* TodoListViewController.swift in Sources */,
+				4EE373F725949D2B0084856F /* Items.swift in Sources */,
 				4E18EBAE258EA3D100FD44C5 /* AppDelegate.swift in Sources */,
 				4EE373F0258EAA9C0084856F /* TodoListViewCell.swift in Sources */,
 				4E18EBB0258EA3D100FD44C5 /* SceneDelegate.swift in Sources */,
@@ -292,7 +344,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = P43ZS29WU7;
-				INFOPLIST_FILE = TodoList_14/Info.plist;
+				INFOPLIST_FILE = "TodoList_14/Supporting Files/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -311,7 +363,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = P43ZS29WU7;
-				INFOPLIST_FILE = TodoList_14/Info.plist;
+				INFOPLIST_FILE = "TodoList_14/Supporting Files/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
