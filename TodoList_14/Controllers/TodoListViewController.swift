@@ -37,15 +37,8 @@ class TodoListViewController: UITableViewController {
         // Allow multiple selection of the tableview
         tableView.allowsMultipleSelection = true
         
-        // Create a new instance from class Items()
-        let newItem = Items(title: "Find Mike", done: false)
-        let newItem1 = Items(title: "Find Mat", done: false)
-        let newItem2 = Items(title: "Find Swann", done: false)
-
-        // Add a new item to itemArray
-        itemArray.append(newItem)
-        itemArray.append(newItem1)
-        itemArray.append(newItem2)
+        // Load the items from Items.plist in the viewDidLoad()
+        loadItems()
         
     }
     
@@ -77,7 +70,7 @@ class TodoListViewController: UITableViewController {
     
     func saveItems(){
         
-        // Create an object that encodes instances of data types to a property list
+        // Create an object that encodes instances of data types TO a property list
         let encoder: PropertyListEncoder = PropertyListEncoder()
         
         /*
@@ -102,6 +95,35 @@ class TodoListViewController: UITableViewController {
         
     }
     
+    //MARK:- NSCoder Load
+    
+    func loadItems(){
+        
+        /*
+         Data(contentsOf:) could throw an error so we use if condtion
+         Initializer for conditional binding must have Optional type, not 'Data' then try is optional
+         Initialize a Data with the contents of an URL
+         */
+        if let data = try? Data(contentsOf: dataFilePath!){
+
+            // Create an object that decodes instances of data types FROM a property list
+            let decoder: PropertyListDecoder = PropertyListDecoder()
+            
+            do {
+                /*
+                 Set itemArray as .decode() 'method that's going to decode data from dataFilePath.
+                 Must specify the data type of Items which will be decoded because Swift is not able to do it fairly. The data type is an array of items. And because we are not specifying an object in order to refer to the data type, we have also to write self.
+                 The data is the one we create above
+                */
+                
+                itemArray = try decoder.decode([Items].self, from: data)
+            } catch {
+                print("Error decoding item array, \(error)")
+            }
+        }
+    }
+
+    
     //MARK:- TableView Delegate Methods
     
     // Did Select row at indexpath tells the delegate a row is selected.
@@ -113,7 +135,7 @@ class TodoListViewController: UITableViewController {
         // This single line replace the if condition, it's a toggle checkmark. They can only have two stats true or false then if we set true it becomes false cause the opposite, and if it's set to false it becomes true.
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
-        // Save the item in "Items.plist"
+        // Save the item done property in "Items.plist"
         saveItems()
         
     }
@@ -202,7 +224,7 @@ class TodoListViewController: UITableViewController {
                 // Now we can push the newItem instance of Items containing the textField.text in title.
                 self.itemArray.append(newItem)
                 
-                // Save the item in "Items.plist"
+                // Save the item title in "Items.plist"
                 self.saveItems()
             }
         }
