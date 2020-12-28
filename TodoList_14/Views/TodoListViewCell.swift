@@ -28,5 +28,6 @@ class TodoListViewCell: UITableViewCell {
         
         // Set the text of the contentLabel to empty string
         contentLabel.text = " "
+    
     }
 }
