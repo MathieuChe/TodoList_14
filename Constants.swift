@@ -12,4 +12,8 @@ struct Constants {
         static let itemsFilePath: String = "Items.plist"
         static let itemsColorNavBar: UIColor = UIColor.init(red: 0.8, green: 0.5, blue: 0.5, alpha: 0.6)
     }
+    struct CategoryController {
+        static let categoryToItemsSegue: String = "CategoryTableViewController"
+        static let categoryReuseIdentifierCell: String = "CategoryTableViewCell"
+    }
 }
