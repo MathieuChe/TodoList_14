@@ -55,6 +55,9 @@ class TodoListViewController: UITableViewController {
                 
         // Print the path to find our application and reach core data files
 //        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+       
+        // Value = nil It didn't get the value from CategoryTableViewController' prepare segue
+        print(selectedCategory)
         
     }
     
