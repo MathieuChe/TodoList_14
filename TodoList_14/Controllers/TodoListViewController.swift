@@ -16,6 +16,11 @@ class TodoListViewController: UITableViewController {
     var itemsArray: [Item] = [Item]()
     
     /*
+     It's an optional data type because it's going to be nil until it will be set thank to categoriesArray[indexPath.row] in CategoryTableViewController file.
+    */
+    var selectedCategory: Category?
+    
+    /*
      In order to get the context from Class AppDelegate we can not just use it as a Class like
      AppDelegate.persistenteContainer.viewContext,
      We start by using the UIApplication class.
@@ -47,9 +52,9 @@ class TodoListViewController: UITableViewController {
         
         // Load the items from the persistentStore in the viewDidLoad()
         loadItems()
-        
+                
         // Print the path to find our application and reach core data files
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+//        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
     }
     
@@ -107,12 +112,44 @@ class TodoListViewController: UITableViewController {
      To read the data from PersistentStore, we have to create request that is NSFetchRequest<Item> data type which allows to fetch the request of the Item.
      Item is the type of result that the request will return because it's between NSFetchRequest's chevron
      Get the class/entity Item and ask a new fetchrequest
-     
      let request: NSFetchRequest<Item> = Item.fetchRequest()
-     
-     We provide a default value to our parameter request:
+     We provide a default value to our parameter request: Item.fetchRequest()
+     Add predicate parameter to avoid conflict with differents predicates and set it to nil like that, we do not have to provide any parameter when we call loadItems(). But to set it to nil we have to give an optional NSPredicate? because Nil default argument value cannot be converted to type 'NSPredicate'.
     */
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()){
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil){
+        
+        /*
+         We don't want anymore all items from the persistent Store but items from a specific category
+         In order to query the NSPersistentStore, have to use NSPredicate(format: ,)
+         In the format by using "parentCategory.name MATCHES %@" we are looking for the attribut name from parentCategory and checking that it matchs with a value
+         The value is the arguments that we are looking for and will replace %@ to have "parentCategory.name MATCHS selectedCategory
+        */
+        
+        // Using guard let to avoid force unwrapping selectedCategory.name
+        guard let argSelectedCategory = selectedCategory else {return}
+        guard let argSelectedCategoryName = argSelectedCategory.name else {return}
+
+        let categoryPredicate: NSPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", argSelectedCategoryName)
+        
+        
+        /*
+         We need to use this specialized predicate, NSCompoundPredicate, to evaluate logical combinations of other predicates.
+         andPredicateWithSubpredicates returns a new predicate formed by categoryPredicates and predicate, the predicates in a given array
+         We just have to make sure that we create a compoundPredicate using as many predicates we need as well the one we passed through the argument
+        */
+        
+        // Using guard let to avoid force unwrapping predicate cause we set NSPredicate? as optional in the parameter
+        guard let safePredicate = predicate else {
+
+            // If predicate is nil
+            return request.predicate = categoryPredicate
+
+        }
+
+        let compoundPredicate: NSCompoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, safePredicate])
+
+        // Assign predicate property of request as the compoundPredicate
+        request.predicate = compoundPredicate
         
         do {
             /*
@@ -235,9 +272,7 @@ class TodoListViewController: UITableViewController {
              textField.text == nil || textField.text == ""
              */
             if (textField.text?.isEmpty ?? true || textField.text == " ") {
-                
-                print("You should add something")
-                
+                                
                 // If it's empty, create an alert explain the issue
                 let emptyTextAlertController: UIAlertController = UIAlertController(title: "Error Empty Field", message: "You should write something or cancel", preferredStyle: .alert)
                 
@@ -264,9 +299,14 @@ class TodoListViewController: UITableViewController {
                 
                 // Set the title of newItem as textField.text but it's an optional String then use gard let
                 guard let text = textField.text else {return}
+                
                 newItem.title = text
+                
                 // Set the done value to false by default because it's a required attribut
                 newItem.done = false
+                
+                // Set the parentCategory, which is the relationship between Item and Category, to the selectedCategory created/didset in TodoListViewController file and set in CategoryTableViewController file
+                newItem.parentCategory = self.selectedCategory
                 
                 // Now we can push the newItem instance of Item containing the textField.text in title.
                 self.itemsArray.append(newItem)
@@ -308,6 +348,7 @@ extension TodoListViewController: UISearchBarDelegate {
 
         // To read the data from PersistentStore, we have to create request that is NSFetchRequest<Item> data type which allows to fetch the request of the Item.
         let request: NSFetchRequest<Item> = Item.fetchRequest()
+        
         /*
          In order to query the NSPersistentStore, have to use NSPredicate(format: ,)
          In the format by using "title CONTAINS %@" we are looking for the attribut title of each item and checking that it contains a value
@@ -318,7 +359,9 @@ extension TodoListViewController: UISearchBarDelegate {
         */
         guard let searchBarText = searchBar.text else {return}
 
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBarText)
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBarText)
+        
+        request.predicate = predicate
         
         /*
          Sort the data when it get back from the database and sort using the key as the "title" which is a property common to all the objects.

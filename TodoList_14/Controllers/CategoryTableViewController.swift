@@ -86,9 +86,7 @@ class CategoryTableViewController: UITableViewController {
              textField.text == nil || textField.text == ""
              */
             if (textField.text?.isEmpty ?? true || textField.text == " ") {
-                
-                print("You should add something")
-                
+                                
                 // If it's empty, create an alert explain the issue
                 let emptyTextAlertController: UIAlertController = UIAlertController(title: "Error Empty Field", message: "You should write something or cancel", preferredStyle: .alert)
                 
@@ -99,11 +97,15 @@ class CategoryTableViewController: UITableViewController {
                     self.present(alert, animated: true, completion: nil)
                 }
                 
+                // Create an action as cancel button with cancel style for the emptyAlert because by using the same cancel alert, we have a conflict
+                let cancelEmptyAlertAction: UIAlertAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+
+                
                 // Add this tryAgain button to the alertEmpty
                 emptyTextAlertController.addAction(tryAgainAlertAction)
                 
                 // Add an action button action named Cancel
-                emptyTextAlertController.addAction(cancelAlertAction)
+                emptyTextAlertController.addAction(cancelEmptyAlertAction)
                 
                 // Show this alertEmpty
                 self.present(emptyTextAlertController, animated: true, completion: nil)
@@ -130,17 +132,17 @@ class CategoryTableViewController: UITableViewController {
         alert.addTextField { (alertTextField) in
             
             // Add a placeholder in the text field
-            alertTextField.placeholder = "Create a new item"
+            alertTextField.placeholder = "Create a new category"
             
             // Extending the scope of the alertTextField by storing the reference of alertTexField to the local variable textField
             textField = alertTextField
         }
         
-        // Add an action button named Add Item
-        alert.addAction(doneAction)
-        
         // Add an action button action named Cancel
         alert.addAction(cancelAlertAction)
+        
+        // Add an action button named Add Item
+        alert.addAction(doneAction)
         
         // The add(sender:) presents the alert with an animation
         self.present(alert, animated: true)
@@ -208,6 +210,40 @@ class CategoryTableViewController: UITableViewController {
         
         // Method that initiates the segue with "CategoryTableViewController" identifier from the current view controller's storyboard file.
         performSegue(withIdentifier: Constants.CategoryController.categoryToItemsSegue, sender: self)
+        
+    }
+    
+    /* Prepare the segue cause we only want to perform the segue from a specific category to its items */
+    
+    // prepare method notifies the view controller that a segue is about to be performed
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+
+        guard let identifier = segue.identifier else {return}
+        
+        // Switch case is really useful for various identifier
+        switch identifier {
+
+        case Constants.CategoryController.categoryToItemsSegue:
+
+            // Define the destination view controller for the segue
+            guard let destinationViewController = segue.destination as? TodoListViewController else {return}
+
+            /*
+             This property index path identifying the current row and section of the selected row
+             The indexPath is optional because there is no selected row at this moment
+             */
+            guard let indexPath = tableView.indexPathForSelectedRow else {return}
+            
+
+            /*
+             After creating our selectedCategory property we assign the value of categoriesArray at the indexPath.row
+             We had to didSet{} selectedCategory with loadItems() in TodoListViewController file
+            */
+            destinationViewController.selectedCategory = categoriesArray[indexPath.row]
+
+        default:
+            break
+        }
     }
     
     //MARK:- Data Manipulation methods
@@ -227,7 +263,7 @@ class CategoryTableViewController: UITableViewController {
             
         } catch {
             
-            print("Error saving context, \(error) ")
+            print("Error saving Category to context, \(error) ")
         }
         
         // We need to reloadData of the tableview because the view is loaded before done property change, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
@@ -258,7 +294,7 @@ class CategoryTableViewController: UITableViewController {
             
         } catch {
             
-            print("Error fetching data from context, \(error)")
+            print("Error fetching Category data from context, \(error)")
         }
         
         // We need to reloadData of the tableview because the view is loaded before done property change, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
