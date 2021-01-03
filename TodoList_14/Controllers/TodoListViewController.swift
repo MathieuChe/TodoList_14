@@ -36,8 +36,10 @@ class TodoListViewController: UITableViewController {
      urls return an array of URLs for documentDirectory in user’s home directory—the place to install user’s personal item
      appendingPathComponent' method creates and returns a URL constructed by appending the given path component to self. The new pathComponent gets the name Item.plist
      So it creates a new .plist document and the path to access it
+     
+     let dataFilePath: URL? = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(Constants.FileManager.itemsFilePath)
      */
-    let dataFilePath: URL? = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(Constants.FileManager.itemsFilePath)
+    
     
     
     //MARK:- Life Cycle
@@ -52,12 +54,6 @@ class TodoListViewController: UITableViewController {
         
         // Load the items from the persistentStore in the viewDidLoad()
         loadItems()
-                
-        // Print the path to find our application and reach core data files
-//        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
-       
-        // Value = nil It didn't get the value from CategoryTableViewController' prepare segue
-        print(selectedCategory)
         
     }
     
@@ -99,6 +95,7 @@ class TodoListViewController: UITableViewController {
              */
             try context.save()
             
+            
         } catch {
             
             print("Error saving context, \(error)")
@@ -129,8 +126,7 @@ class TodoListViewController: UITableViewController {
         */
         
         // Using guard let to avoid force unwrapping selectedCategory.name
-        guard let argSelectedCategory = selectedCategory else {return}
-        guard let argSelectedCategoryName = argSelectedCategory.name else {return}
+        guard let argSelectedCategory = selectedCategory, let argSelectedCategoryName = argSelectedCategory.name else {return}
 
         let categoryPredicate: NSPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", argSelectedCategoryName)
         
@@ -141,18 +137,22 @@ class TodoListViewController: UITableViewController {
          We just have to make sure that we create a compoundPredicate using as many predicates we need as well the one we passed through the argument
         */
         
-        // Using guard let to avoid force unwrapping predicate cause we set NSPredicate? as optional in the parameter
-        guard let safePredicate = predicate else {
+        /*
+         Using if let to avoid force unwrapping predicate cause we set NSPredicate? as optional in the parameter
+         Never use guard let when the optional data type is in function parameter because if we do it, this condition will never be called
+        */
+        if let safePredicate = predicate {
 
-            // If predicate is nil
-            return request.predicate = categoryPredicate
+            // Assign predicate property of request as the predicate
+            request.predicate = safePredicate
+            
+            let compoundPredicate: NSCompoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, safePredicate])
+
+            // Assign predicate property of request as the compoundPredicate
+            request.predicate = compoundPredicate
 
         }
 
-        let compoundPredicate: NSCompoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, safePredicate])
-
-        // Assign predicate property of request as the compoundPredicate
-        request.predicate = compoundPredicate
         
         do {
             /*
@@ -185,8 +185,6 @@ class TodoListViewController: UITableViewController {
         // Save the item done property in NSPersistentContainer
         saveItems()
         
-        // Deselects a given row identified by index path with deselection' animated.
-        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     //MARK:- TableView Datasource Methods
@@ -309,7 +307,10 @@ class TodoListViewController: UITableViewController {
                 newItem.done = false
                 
                 // Set the parentCategory, which is the relationship between Item and Category, to the selectedCategory created/didset in TodoListViewController file and set in CategoryTableViewController file
-                newItem.parentCategory = self.selectedCategory
+//                newItem.parentCategory = self.selectedCategory
+                
+                // Etablir une relation
+                self.selectedCategory?.addToItems(newItem)
                 
                 // Now we can push the newItem instance of Item containing the textField.text in title.
                 self.itemsArray.append(newItem)

@@ -35,6 +35,9 @@ class CategoryTableViewController: UITableViewController {
         
         // Load the categories from the persistentStore in the viewDidLoad()
         loadCategories()
+        
+        // Print the path to find our application and reach core data files
+//        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
     }
     
     //MARK:- Navigation
@@ -204,9 +207,6 @@ class CategoryTableViewController: UITableViewController {
 
     // Did Select row at indexpath tells the delegate a row is selected.
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        // Deselects a given row identified by index path with deselection' animated.
-        tableView.deselectRow(at: indexPath, animated: true)
         
         // Method that initiates the segue with "CategoryTableViewController" identifier from the current view controller's storyboard file.
         performSegue(withIdentifier: Constants.CategoryController.categoryToItemsSegue, sender: self)
