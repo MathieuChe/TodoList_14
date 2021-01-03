@@ -19,6 +19,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Print a created list of directory search paths.
 //        print(NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true))
         
+        // Difference between main context (viewContext) and secondary context (newBackgroundContext)
+//        persistentContainer.newBackgroundContext()
+        
         return true
     }
 
