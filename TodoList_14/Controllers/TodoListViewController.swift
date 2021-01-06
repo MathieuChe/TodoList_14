@@ -66,14 +66,14 @@ class TodoListViewController: UITableViewController {
          Allow to customize a bar button item that displays on the right. UIBarButtonItem is a specialized button for placement on a toolbar or tab bar, in our example it's an add button
          The target is the item itself and the selector is the add(sender:) from the @objc func add(sender: UIBarButtonItem) {} created
          */
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonPressed(sender:)))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addItemButtonPressed(sender:)))
         
         // Set the add button to white color
         navigationItem.rightBarButtonItem?.tintColor = .white
         
     }
     
-    //MARK:- CoreData Save
+    //MARK:- Realm Save
     
     //    func save(item: Item){
     //
@@ -98,7 +98,7 @@ class TodoListViewController: UITableViewController {
     //    }
     
     
-    //MARK:- CoreData Load
+    //MARK:- Realm Load
     
     /*
      To read the data from PersistentStore, we have to create request that is NSFetchRequest<Item> data type which allows to fetch the request of the Item.
@@ -253,7 +253,7 @@ class TodoListViewController: UITableViewController {
     
     // Create a function similar to a @IBAction linked to the add UIBarButtonItem
     
-    @objc func addButtonPressed(sender: UIBarButtonItem) {
+    @objc func addItemButtonPressed(sender: UIBarButtonItem) {
         
         // Create a local variable textField inside the @IBAction to the alertTextField in the closure be accessible inside the @IBAction
         var textField: UITextField = UITextField()
@@ -298,6 +298,8 @@ class TodoListViewController: UITableViewController {
                 self.present(emptyTextAlertController, animated: true, completion: nil)
                 
             } else {
+                
+                /* Here we gona CREATE and SAVE data to Realm */
                 
                 // To save items in the selectedCategory
                 guard let currentCategory = self.selectedCategory else {return}

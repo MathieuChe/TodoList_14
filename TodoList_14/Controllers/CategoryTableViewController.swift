@@ -58,7 +58,7 @@ class CategoryTableViewController: UITableViewController {
          Allow to customize a bar button item that displays on the right. UIBarButtonItem is a specialized button for placement on a toolbar or tab bar, in our example it's an add button
          The target is the item itself and the selector is the add(sender:) from the @objc func add(sender: UIBarButtonItem) {} created
          */
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonPressed(sender:)))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addCategoryButtonPressed(sender:)))
         
         // Set the add button to white color
         navigationItem.rightBarButtonItem?.tintColor = .white
@@ -66,7 +66,7 @@ class CategoryTableViewController: UITableViewController {
     
     //MARK:- Add Button
     
-    @objc func addButtonPressed(sender: UIBarButtonItem){
+    @objc func addCategoryButtonPressed(sender: UIBarButtonItem){
         
         // Create a local variable textField inside the @IBAction to the alertTextField in the closure be accessible inside the @IBAction
         var textField: UITextField = UITextField()
