@@ -116,7 +116,7 @@ class TodoListViewController: UITableViewController {
         todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         
         /*
-                        ReloadData() call all datasource methods
+         ReloadData() call all datasource methods
          
          We need to reloadData of the tableview because the view is loaded before items are sorted, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
          */
@@ -135,7 +135,7 @@ class TodoListViewController: UITableViewController {
         /*
          todoItems is a container of items fetched from Realm. So item its the todoItems grab in the current selected row then check if it's not nil like that we are able to access to this item object
          todoItems is optional cause selectedCategory is optional too.
-        */
+         */
         if let item = todoItems?[indexPath.row] {
             do {
                 
@@ -152,7 +152,7 @@ class TodoListViewController: UITableViewController {
         }
         
         /*
-                        ReloadData() call all datasource methods
+         ReloadData() call all datasource methods
          
          We need to reloadData of the tableview because the view is loaded before done property change, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes.
          This method call CellForRowAt indexPath method to update our cells based on this done property.
@@ -183,7 +183,7 @@ class TodoListViewController: UITableViewController {
         /*
          todoItems is a container of items fetched from Realm. So item its the todoItems grab in the current selected row then check if it's not nil like that we are able to access to this item object
          todoItems is optional cause selectedCategory is optional too.
-        */
+         */
         if let item = todoItems?[indexPath.row] {
             
             // Set the text of contentLabel as the text in the todoItems from TodoListViewCell
@@ -220,11 +220,11 @@ class TodoListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         
         /* Here we gona DELETE data from Realm */
-
+        
         /*
          todoItems is a container of items fetched from Realm. So item its the todoItems grab in the current selected row then check if it's not nil like that we are able to access to this item object
          todoItems is optional cause selectedCategory is optional too.
-        */
+         */
         if let item = todoItems?[indexPath.row] {
             
             do {
@@ -240,7 +240,7 @@ class TodoListViewController: UITableViewController {
         }
         
         /*
-                        ReloadData() call all datasource methods
+         ReloadData() call all datasource methods
          
          We need to reloadData of the tableview because the view is loaded before items are deleted, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes.
          This method call CellForRowAt indexPath method to update our cells based on this done property.
@@ -261,85 +261,48 @@ class TodoListViewController: UITableViewController {
         // Create an alert
         let alert: UIAlertController = UIAlertController(title: "Add New Todo Item", message: "", preferredStyle: .alert)
         
-        // Create an action as cancel button with cancel style
-        let cancelAlertAction: UIAlertAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-        
         // Create an action as done button. It's the completion code when the Add Item button get pressed
-        let doneAction: UIAlertAction = UIAlertAction(title: "Add Item", style: .default) { (action) in
+        let saveAction: UIAlertAction = UIAlertAction(title: "Add Item", style: .default) { (action) in
             
-            /*
-             What will happen once the user clicks the Add Item button on the UIAlert
-             */
             
-            /*
-             Conditions allow to avoid a textField equal nil or empty
-             Check for the empty Field
-             textField.text == nil || textField.text == ""
-             */
-            if (textField.text?.isEmpty ?? true || textField.text == " ") {
+            /* Here we gona CREATE and SAVE data to Realm */
+            
+            // To save items in the selectedCategory
+            guard let currentCategory = self.selectedCategory else {return}
+            
+            do {
                 
-                // If it's empty, create an alert explain the issue
-                let emptyTextAlertController: UIAlertController = UIAlertController(title: "Error Empty Field", message: "You should write something or cancel", preferredStyle: .alert)
-                
-                // Create a try Again button
-                let tryAgainAlertAction: UIAlertAction = UIAlertAction(title: "Try again", style: .default) { (action) in
+                /*
+                 write property performs actions contained within the given block inside a write transaction.
+                 .add()' method adds an unmanaged object to this Realm.
+                 It's a throw method so use the do try catch
+                 */
+                try self.realm.write{
+                    // As we use Realm in order to save and create item
+                    let newItem = Item()
                     
-                    // When tryAgain button is clicked, present the first alert showing the textField
-                    self.present(alert, animated: true, completion: nil)
-                }
-                
-                // Add this tryAgain button to the alertEmpty
-                emptyTextAlertController.addAction(tryAgainAlertAction)
-                
-                // Add an action button action named Cancel
-                emptyTextAlertController.addAction(cancelAlertAction)
-                
-                // Show this alertEmpty
-                self.present(emptyTextAlertController, animated: true, completion: nil)
-                
-            } else {
-                
-                /* Here we gona CREATE and SAVE data to Realm */
-                
-                // To save items in the selectedCategory
-                guard let currentCategory = self.selectedCategory else {return}
-                
-                do {
+                    // Set the name of newCategory as textField.text without whitespaces but it's an optional String then use gard let
+                    guard let text = textField.text?.trimmingCharacters(in: .whitespaces) else {return}
+                    
+                    newItem.title = text
+                    
+                    // Every instance we create get stamp with the current date and time
+                    newItem.dateCreated = Date()
                     
                     /*
-                     write property performs actions contained within the given block inside a write transaction.
-                     .add()' method adds an unmanaged object to this Realm.
-                     It's a throw method so use the do try catch
+                     items are the List<Item>
+                     .append(object:) method appends the given object to the end of the list.
                      */
-                    try self.realm.write{
-                        // As we use Realm in order to save and create item
-                        let newItem = Item()
-                        
-                        // Set the title of newItem as textField.text but it's an optional String then use gard let
-                        guard let text = textField.text else {return}
-                        
-                        newItem.title = text
-                        
-                        // Every instance we create get stamp with the current date and time
-                        newItem.dateCreated = Date()
-                        
-                        /*
-                         items are the List<Item>
-                         .append(object:) method appends the given object to the end of the list.
-                         */
-                        currentCategory.items.append(newItem)
-                        
-                    }
-                    
-                } catch {
-                    
-                    print("Error saving Category to context, \(error) ")
+                    currentCategory.items.append(newItem)
                 }
                 
+            } catch {
+                
+                print("Error saving Category to context, \(error) ")
             }
             
             /*
-                            ReloadData() call all datasource methods
+             ReloadData() call all datasource methods
              
              We need to reloadData of the tableview because the view is loaded before items are added to Realm, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
              */
@@ -347,24 +310,46 @@ class TodoListViewController: UITableViewController {
             
         }
         
+        // The user can not click on saveAction button because it's desabled
+        saveAction.isEnabled = false
+        
+        // Create an action as cancel button with cancel style
+        let cancelAlertAction: UIAlertAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        
         // Add a text field to the alert
         alert.addTextField { (alertTextField) in
             
             // Add a placeholder in the text field
-            alertTextField.placeholder = "Create a new item"
+            alertTextField.placeholder = "Create a new category"
             
             // Extending the scope of the alertTextField by storing the reference of alertTexField to the local variable textField
             textField = alertTextField
         }
         
-        // Add an action button named Add Item
-        alert.addAction(doneAction)
+        // Adding the notification observer here to udpate any text changes and allow to click or not on the button
+        NotificationCenter.default.addObserver(forName: UITextField.textDidChangeNotification, object: alert.textFields?[0], queue: OperationQueue.main) { (notification) in
+            
+            // Use guard let to avoid to force unwrapp the UITextfield data type
+            guard let textFieldCategory = alert.textFields?[0] else {return}
+            
+            /*
+             Conditions allow to avoid a textField equal nil or empty
+             Check for the empty Field and avoid the trim as last character
+             If it's empty, the user can not click on the button cause it should be disabled
+             */
+            saveAction.isEnabled = !((textFieldCategory.text?.isEmpty ?? true) || textFieldCategory.text?.last == " ")
+            
+        }
         
         // Add an action button action named Cancel
         alert.addAction(cancelAlertAction)
         
+        // Add an action button named Add Item
+        alert.addAction(saveAction)
+        
         // The add(sender:) presents the alert with an animation
         self.present(alert, animated: true)
+        
     }
     
 }
@@ -376,7 +361,7 @@ class TodoListViewController: UITableViewController {
 
 // Add UISearchBarDelegate protocol to use search bar functions
 extension TodoListViewController: UISearchBarDelegate {
-
+    
     // SearchBarDelegate method telling the delegate that the search button was tapped by click on enter
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         
@@ -387,9 +372,9 @@ extension TodoListViewController: UISearchBarDelegate {
          The value is the arguments that we are looking for and will replace %@ to have "title CONTAINS searchBarText
          Using guard let to avoid force unwrapping text
          Add predicate argument to .filter() method which looking for NSPredicate
-        */
+         */
         guard let searchBarText = searchBar.text else {return}
-
+        
         let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBarText)
         
         /*
@@ -397,30 +382,30 @@ extension TodoListViewController: UISearchBarDelegate {
          As we want on top the most recent item, set the ascending as true
          */
         todoItems = todoItems?.filter(predicate).sorted(byKeyPath: "dateCreated", ascending: true)
-
+        
         /*
-                        ReloadData() call all datasource methods
+         ReloadData() call all datasource methods
          
          We need to reloadData of the tableview because the view is loaded before using predicate and .sorted(), so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes.
-        */
+         */
         tableView.reloadData()
         
         /*
          We do not need to use loadItems() because we've already loaded todoItems from selectedCategory in func loadItems().
          Here we simply filter this items
-        */
+         */
         
-
+        
     }
-
+    
     // SearchBarDelegate method telling the delegate that the user change the search text
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         guard let searchBarText = searchBar.text else {return}
-
+        
         // Check if searchBar is empty equal to if we click on the cross button to delete the text in the searchBar
         if (searchBarText.count == 0) {
             loadItems()
-
+            
             /*
              It manages the execution of tasks serially or concurrently on our app's main thread or on a background thread.
              It's associated with the main thread of the current process.
@@ -430,23 +415,23 @@ extension TodoListViewController: UISearchBarDelegate {
                 /*
                  Notifies the searchBar is not anymore the first Responder.
                  By using DispatchQueue and resignFirstResponder we get the keyboard pops away and cursor disappear, all because of searchBar.resignFirstResponder() is being run in the foreground
-                */
+                 */
                 searchBar.resignFirstResponder()
             }
-
+            
         } else {
             
             // Each time we modify the text in the searchBar, the items are updated
             
             guard let searchBarText = searchBar.text else {return}
-
+            
             let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBarText)
             
             todoItems = todoItems?.filter(predicate).sorted(byKeyPath: "dateCreated", ascending: true)
             
             tableView.reloadData()
         }
-
+        
     }
-
+    
 }
