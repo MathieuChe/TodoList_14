@@ -6,24 +6,27 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class CategoryTableViewController: UITableViewController {
     
     //MARK:- Properties
-
-    // Create categoriesArray an Array instance of type Category
-    var categoriesArray: [Category] = [Category]()
     
     /*
-     In order to get the context from Class AppDelegate we can not just use it as a Class like
-     AppDelegate.persistenteContainer.viewContext,
-     We start by using the UIApplication class.
-     The shared of UIApplication will correspond to the current App as an object. It returns the  singleton app instance of application.
-     The delegate is one of the App Object which have the data type of UIApplicationDelegate so we have to downcast UIApplicationDelegate as AppDelegate because both inherite same super class UIApplicationDelegate.
-     Now we have access to our AppDelegate as an object then get persistentContainer property and its viewContext
-     */
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+                    Initialization of new access point to Realm Database
+     
+     Create realm as a Realm instance (also referred to as “a Realm”) represents a Realm database.
+     This initialization can throw an error it's because according to Realm, first time when you create a  Realm new instance, it can fail if our ressources are constraintes.
+     It could happen only once an instance is created on a given thread.
+    */
+    let realm = try! Realm()
+
+    /*
+     Create categoriesArray as Results<Category> data type because we need this data type in Realm to load our data.
+     Results is an auto-updating container type in Realm returned from object queries.
+     Results<Category> should be an optional data type allowing us to be safe
+    */
+    var categoriesArray: Results<Category>?
     
     //MARK:- Life Cycle
 
@@ -33,11 +36,9 @@ class CategoryTableViewController: UITableViewController {
         
         setupNavigationBar()
         
-        // Load the categories from the persistentStore in the viewDidLoad()
+        // Load the categories from the Realm Database in the viewDidLoad()
         loadCategories()
         
-        // Print the path to find our application and reach core data files
-//        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
     }
     
     //MARK:- Navigation
@@ -115,19 +116,18 @@ class CategoryTableViewController: UITableViewController {
                 
             } else {
                 
-                // As we use CoreData in order to save and create category, our Category is no more Category type but NSManagedObject because it comes from the DataModel by using codegen Class Definition
-                let newCategory: Category = Category(context: self.context)
+                // As we use Realm in order to save and create category, our newCategory is an instance of Category
+                let newCategory: Category = Category()
                 
                 // Set the name of newCategory as textField.text but it's an optional String then use gard let
                 guard let text = textField.text else {return}
                 
                 newCategory.name = text
                 
-                // Now we can push the newCategory instance of Category containing the textField.text in name.
-                self.categoriesArray.append(newCategory)
+                /* We do not need anymore to append things: self.categoriesArray.append(newCategory), it will simply auto-update and monitor for its changes. */
                 
-                // Save the category name in NSPersistentContainer
-                self.saveCategories()
+                // Save the category name in Realm
+                self.save(category: newCategory)
             }
         }
         
@@ -160,9 +160,13 @@ class CategoryTableViewController: UITableViewController {
         return 1
     }
     
-    // Define the number of Rows in section
+    /*
+     Define the number of Rows in section
+     We have to use Nil Coalescing Operator
+     As the categoriesArray is an optional data type and if categoriesArray?.count = nil we must return a default value as 1
+    */
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categoriesArray.count
+        return categoriesArray?.count ?? 1
     }
     
     // Define the cell for row
@@ -171,11 +175,11 @@ class CategoryTableViewController: UITableViewController {
         // Create cell as an instance of CategoryTableViewCell with the identifier
         let cell = tableView.dequeueReusableCell(withIdentifier: Constants.CategoryController.categoryReuseIdentifierCell, for: indexPath)
         
-        // Refactor by assigning categoriesArray[indexPath.row] to a constant
-        let category = categoriesArray[indexPath.row]
-        
-        // TextLabel is the label to use for the main textual content of the table cell.
-        cell.textLabel?.text = category.name
+        /*
+         TextLabel is the label to use for the main textual content of the table cell.
+         We have to use Nil Coalescing Operator and if nil set the default value as a string message 
+        */
+        cell.textLabel?.text = categoriesArray?[indexPath.row].name ?? "No category added yet"
         
         return cell
     }
@@ -193,14 +197,28 @@ class CategoryTableViewController: UITableViewController {
     // Datasource method asking the data source to commit the insertion or deletion of a specified row in the receiver.
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         
-        // Specifies an object that should be removed from its persistent store when changes are committed
-        context.delete(categoriesArray[indexPath.row])
+        /* Here we gona DELETE data from Realm */
         
-        // Removes and returns the element at the specified position
-        categoriesArray.remove(at: indexPath.row)
+        if let currentCategory = categoriesArray?[indexPath.row] {
+            
+            do {
+                
+                try realm.write{
+                    
+                    // .delete(_ object: ObjectBase) method deletes an object from the Realm. Once the object is deleted it is considered invalidated.
+                    realm.delete(currentCategory)
+                }
+            } catch {
+                print("Error deleting Category from Realm, \(error)")
+            }
+        }
         
-        // Must to save the delete from context to delete in Persistent Store
-        saveCategories()
+        /*
+                        ReloadData() call all datasource methods
+         
+         We need to reloadData of the tableview because the view is loaded before category is deleted, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
+         */
+        tableView.reloadData()
     }
     
     //MARK:- UITableView Delegate methods
@@ -238,8 +256,9 @@ class CategoryTableViewController: UITableViewController {
             /*
              After creating our selectedCategory property we assign the value of categoriesArray at the indexPath.row
              We had to didSet{} selectedCategory with loadItems() in TodoListViewController file
+             We do not need to use a Nil Coalescing Operator because selectedCategory is already an optional Category data type in TodoListViewController file
             */
-            destinationViewController.selectedCategory = categoriesArray[indexPath.row]
+            destinationViewController.selectedCategory = categoriesArray?[indexPath.row]
 
         default:
             break
@@ -250,54 +269,56 @@ class CategoryTableViewController: UITableViewController {
     
     //MARK:- CoreData Save
 
-    func saveCategories(){
+    /* Here we gona SAVE data from Realm */
+
+    // Add category parameter as Category data type in the saveCategories function
+    func save(category: Category){
         
         do {
             
             /*
-             .save()' method of context allows to save permanently in the persistentContainer.
-             This method attempts to commit unsaved changes to registered objects to the context’s parent store.
+             write property performs actions contained within the given block inside a write transaction.
+             .add()' method adds an unmanaged object to this Realm.
              It's a throw method so use the do try catch
              */
-            try context.save()
+            try realm.write{
+                realm.add(category)
+            }
             
         } catch {
             
             print("Error saving Category to context, \(error) ")
         }
         
-        // We need to reloadData of the tableview because the view is loaded before done property change, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
+        /*
+                        ReloadData() call all datasource methods
+         
+        We need to reloadData of the tableview because the view is loaded before category is added to Realm, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
+        */
         tableView.reloadData()
     }
     
     //MARK:- CoreData Load
 
-    /*
-     To read the data from PersistentStore, we have to create request that is NSFetchRequest<Category> data type which allows to fetch the request of the Category.
-     Item is the type of result that the request will return because it's between NSFetchRequest's chevron
-     Get the class/entity Category and ask a new fetchrequest
+    /* Here we gona LOAD data from Realm */
+
+    func loadCategories(){
      
-     let request: NSFetchRequest<Category> = Category.fetchRequest()
-     
-     We provide a default value to our parameter request:
-    */
-    func loadCategories(with request: NSFetchRequest<Category> = Category.fetchRequest()){
+        /*
+          To read the data from Realm database, we have to assign realm.objects(Category.self) to categoriesArray.
+         realm.objects(_ type: Element.Type) returns all objects of the given type stored in the Realm.
+         For the type of the class we still need to add .self after the class.
+         This will pull out all of the items inside our realm that are a category object.
+         As realm.objects(_ type: Element.Type) should returns a Results<Element> data type we have to define categoriesArray as Results<Category> data type
+        */
+        categoriesArray = realm.objects(Category.self)
+
         
-        do {
-            
-            /*
-             Absolutely need the context to fetch the request from the persistent Store.
-             The method .fetch(request) returns an array of objects that meet the criteria specified by a given fetch request.
-             So we have to assign try context.fetch(request) to the itemsArray
-             */
-            categoriesArray = try context.fetch(request)
-            
-        } catch {
-            
-            print("Error fetching Category data from context, \(error)")
-        }
-        
-        // We need to reloadData of the tableview because the view is loaded before done property change, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
+        /*
+                        ReloadData() call all datasource methods
+         
+         We need to reloadData of the tableview to load the view after using .objects() method, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
+        */
         tableView.reloadData()
     }
     

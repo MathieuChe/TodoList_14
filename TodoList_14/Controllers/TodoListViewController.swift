@@ -6,39 +6,31 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class TodoListViewController: UITableViewController {
     
     //MARK:- Properties
     
-    // Create itemsArray an Array instance of type Item
-    var itemsArray: [Item] = [Item]()
+    /*
+     Create a result container as Results<Item> data type because we need this data type in Realm to load our data.
+     Results is an auto-updating container type in Realm returned from object queries.
+     Results<Item> should be an optional data type
+     
+     */
+    var todoItems: Results<Item>? 
     
     /*
      It's an optional data type because it's going to be nil until it will be set thank to categoriesArray[indexPath.row] in CategoryTableViewController file.
-    */
+     */
     var selectedCategory: Category?
     
     /*
-     In order to get the context from Class AppDelegate we can not just use it as a Class like
-     AppDelegate.persistenteContainer.viewContext,
-     We start by using the UIApplication class.
-     The shared of UIApplication will correspond to the current App as an object. It returns the  singleton app instance of application.
-     The delegate is one of the App Object which have the data type of UIApplicationDelegate so we have to downcast UIApplicationDelegate as AppDelegate because both inherite same super class UIApplicationDelegate.
-     Now we have access to our AppDelegate as an object then get persistentContainer property and its viewContext
+     Create realm as a Realm instance (also referred to as “a Realm”) represents a Realm database.
+     This initialization can throw an error it's because according to Realm, first time when you create a  Realm new instance, it can fail if our ressources are constraintes.
+     It could happen only once an instance is created on a given thread
      */
-    let context: NSManagedObjectContext = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-    
-    /*
-     Path to reach documents of our App
-     FileManager is a convenient interface to the contents of the file system and we get a singleton thanks to default property.
-     urls return an array of URLs for documentDirectory in user’s home directory—the place to install user’s personal item
-     appendingPathComponent' method creates and returns a URL constructed by appending the given path component to self. The new pathComponent gets the name Item.plist
-     So it creates a new .plist document and the path to access it
-     
-     let dataFilePath: URL? = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(Constants.FileManager.itemsFilePath)
-     */
+    let realm = try! Realm()
     
     
     
@@ -52,7 +44,7 @@ class TodoListViewController: UITableViewController {
         // Allow multiple selection of the tableview
         tableView.allowsMultipleSelection = true
         
-        // Load the items from the persistentStore in the viewDidLoad()
+        // We absolutely need to load the items from the Realm Database in the viewDidLoad()
         loadItems()
         
     }
@@ -83,28 +75,28 @@ class TodoListViewController: UITableViewController {
     
     //MARK:- CoreData Save
     
-    func saveItems(){
-        
-        
-        do {
-            
-            /*
-             .save()' method of context allows to save permanently in the persistentContainer.
-             This method attempts to commit unsaved changes to registered objects to the context’s parent store.
-             It's a throw method so use the do try catch
-             */
-            try context.save()
-            
-            
-        } catch {
-            
-            print("Error saving context, \(error)")
-        }
-        
-        // We need to reloadData of the tableview because the view is loaded before done property change, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
-        self.tableView.reloadData()
-        
-    }
+    //    func save(item: Item){
+    //
+    //        do {
+    //
+    //            /*
+    //             write property performs actions contained within the given block inside a write transaction.
+    //             .add()' method adds an unmanaged object to this Realm.
+    //             It's a throw method so use the do try catch
+    //             */
+    //            try realm.write{
+    //                realm.add(item)
+    //            }
+    //
+    //        } catch {
+    //
+    //            print("Error saving Category to context, \(error) ")
+    //        }
+    //
+    //        // We need to reloadData of the tableview because the view is loaded before done property change, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
+    //        tableView.reloadData()
+    //    }
+    
     
     //MARK:- CoreData Load
     
@@ -115,62 +107,21 @@ class TodoListViewController: UITableViewController {
      let request: NSFetchRequest<Item> = Item.fetchRequest()
      We provide a default value to our parameter request: Item.fetchRequest()
      Add predicate parameter to avoid conflict with differents predicates and set it to nil like that, we do not have to provide any parameter when we call loadItems(). But to set it to nil we have to give an optional NSPredicate? because Nil default argument value cannot be converted to type 'NSPredicate'.
-    */
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil){
+     */
+    func loadItems(){
         
         /*
-         We don't want anymore all items from the persistent Store but items from a specific category
-         In order to query the NSPersistentStore, have to use NSPredicate(format: ,)
-         In the format by using "parentCategory.name MATCHES %@" we are looking for the attribut name from parentCategory and checking that it matchs with a value
-         The value is the arguments that we are looking for and will replace %@ to have "parentCategory.name MATCHS selectedCategory
-        */
-        
-        // Using guard let to avoid force unwrapping selectedCategory.name
-        guard let argSelectedCategory = selectedCategory, let argSelectedCategoryName = argSelectedCategory.name else {return}
-
-        let categoryPredicate: NSPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", argSelectedCategoryName)
-        
+         All the items that belong to selectedCategory are sorted by keypath title and are ascending
+         */
+        todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         
         /*
-         We need to use this specialized predicate, NSCompoundPredicate, to evaluate logical combinations of other predicates.
-         andPredicateWithSubpredicates returns a new predicate formed by categoryPredicates and predicate, the predicates in a given array
-         We just have to make sure that we create a compoundPredicate using as many predicates we need as well the one we passed through the argument
-        */
-        
-        /*
-         Using if let to avoid force unwrapping predicate cause we set NSPredicate? as optional in the parameter
-         Never use guard let when the optional data type is in function parameter because if we do it, this condition will never be called
-        */
-        if let safePredicate = predicate {
-
-            // Assign predicate property of request as the predicate
-            request.predicate = safePredicate
-            
-            let compoundPredicate: NSCompoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, safePredicate])
-
-            // Assign predicate property of request as the compoundPredicate
-            request.predicate = compoundPredicate
-
-        }
-
-        
-        do {
-            /*
-             Absolutely need the context to fetch the request from the persistent Store.
-             The method .fetch(request) returns an array of objects that meet the criteria specified by a given fetch request.
-             So we have to assign try context.fetch(request) to the itemsArray
-             */
-            itemsArray = try context.fetch(request)
-            
-        } catch {
-            
-            print("Error fetching data from context \(error)")
-            
-        }
-        
-        // We need to reloadData of the tableview because the view is loaded before done property change, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
+                        ReloadData() call all datasource methods
+         
+         We need to reloadData of the tableview because the view is loaded before items are sorted, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
+         */
         tableView.reloadData()
-
+        
     }
     
     
@@ -179,11 +130,34 @@ class TodoListViewController: UITableViewController {
     // Did Select row at indexpath tells the delegate a row is selected.
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        // This single line replace the if condition, it's a toggle checkmark. They can only have two stats true or false then if we set true it becomes false cause the opposite, and if it's set to false it becomes true.
-        itemsArray[indexPath.row].done = !itemsArray[indexPath.row].done
+        /* Here we gona UPDATE data from Realm */
         
-        // Save the item done property in NSPersistentContainer
-        saveItems()
+        /*
+         todoItems is a container of items fetched from Realm. So item its the todoItems grab in the current selected row then check if it's not nil like that we are able to access to this item object
+         todoItems is optional cause selectedCategory is optional too.
+        */
+        if let item = todoItems?[indexPath.row] {
+            do {
+                
+                // Save the item done property in Realm database
+                try realm.write{
+                    
+                    // This single line replace the if condition, it's a toggle checkmark. They can only have two stats true or false then if we set true it becomes false cause the opposite, and if it's set to false it becomes true.
+                    item.done = !item.done
+                }
+            } catch {
+                print("Error saving done status, \(error)")
+            }
+            
+        }
+        
+        /*
+                        ReloadData() call all datasource methods
+         
+         We need to reloadData of the tableview because the view is loaded before done property change, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes.
+         This method call CellForRowAt indexPath method to update our cells based on this done property.
+         */
+        tableView.reloadData()
         
     }
     
@@ -192,31 +166,42 @@ class TodoListViewController: UITableViewController {
     // Define the number of Rows in section
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        // The number of item in itemsArray to set the number of rows
-        return itemsArray.count
+        /*
+         Define the number of Rows in section
+         We have to use Nil Coalescing Operator
+         As the todoItems is an optional data type and if todoItems?.count = nil we must return a default value as 1
+         */
+        return todoItems?.count ?? 1
     }
     
     // Define the cell for row
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         // Create cell as an instance of TodoListViewCell with the identifier
-        let cell = tableView.dequeueReusableCell(withIdentifier: TodoListViewCell.reuseIdentifier, for: indexPath) as! TodoListViewCell
-        
-        // Refactor by assigning itemsArray[indexPath.row] to a constant
-        let item = itemsArray[indexPath.row]
-        
-        // Set the text of contentLabel as the text in the itemsArray from TodoListViewCell
-        //        cell.contentLabel.text = item.title
-        
-        // TextLabel is the label to use for the main textual content of the table cell.
-        cell.textLabel?.text = item.title
+        let cell = tableView.dequeueReusableCell(withIdentifier: Constants.TodoListController.todoListReuseIdentifierCell, for: indexPath)
         
         /*
-         Ternary operator == >
-         value = condtion ? valueIsTrue : valueIsFalse
-         cell.accessoryType is the value, item.done == true is the condition, then if it's true cell.accessoryType = .checkmark otherwise cell.accessoryType = .none
-         */
-        cell.accessoryType = item.done ? .checkmark : .none
+         todoItems is a container of items fetched from Realm. So item its the todoItems grab in the current selected row then check if it's not nil like that we are able to access to this item object
+         todoItems is optional cause selectedCategory is optional too.
+        */
+        if let item = todoItems?[indexPath.row] {
+            
+            // Set the text of contentLabel as the text in the todoItems from TodoListViewCell
+            //        cell.contentLabel.text = item.title
+            
+            // TextLabel is the label to use for the main textual content of the table cell.
+            cell.textLabel?.text = item.title
+            
+            /*
+             Ternary operator == >
+             value = condtion ? valueIsTrue : valueIsFalse
+             cell.accessoryType is the value, item.done == true is the condition, then if it's true cell.accessoryType = .checkmark otherwise cell.accessoryType = .none
+             */
+            cell.accessoryType = item.done ? .checkmark : .none
+            
+        } else {
+            cell.textLabel?.text = "No item added yet"
+        }
         
         return cell
     }
@@ -234,15 +219,34 @@ class TodoListViewController: UITableViewController {
     // Datasource method asking the data source to commit the insertion or deletion of a specified row in the receiver.
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         
+        /* Here we gona DELETE data from Realm */
+
+        /*
+         todoItems is a container of items fetched from Realm. So item its the todoItems grab in the current selected row then check if it's not nil like that we are able to access to this item object
+         todoItems is optional cause selectedCategory is optional too.
+        */
+        if let item = todoItems?[indexPath.row] {
+            
+            do {
+                
+                try realm.write{
+                    
+                    // .delete(_ object: ObjectBase) method deletes an object from the Realm. Once the object is deleted it is considered invalidated.
+                    realm.delete(item)
+                }
+            } catch {
+                print("Error deleting item from Realm, \(error)")
+            }
+        }
         
-        // Specifies an object that should be removed from its persistent store when changes are committed
-        context.delete(itemsArray[indexPath.row])
+        /*
+                        ReloadData() call all datasource methods
+         
+         We need to reloadData of the tableview because the view is loaded before items are deleted, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes.
+         This method call CellForRowAt indexPath method to update our cells based on this done property.
+         */
+        tableView.reloadData()
         
-        // Removes and returns the element at the specified position
-        itemsArray.remove(at: indexPath.row)
-        
-        // Must to save the delete from context to delete in Persistent Store
-        saveItems()
     }
     
     //MARK:- Add new item
@@ -273,7 +277,7 @@ class TodoListViewController: UITableViewController {
              textField.text == nil || textField.text == ""
              */
             if (textField.text?.isEmpty ?? true || textField.text == " ") {
-                                
+                
                 // If it's empty, create an alert explain the issue
                 let emptyTextAlertController: UIAlertController = UIAlertController(title: "Error Empty Field", message: "You should write something or cancel", preferredStyle: .alert)
                 
@@ -295,29 +299,50 @@ class TodoListViewController: UITableViewController {
                 
             } else {
                 
-                // As we use CoreData in order to save and create item, our Item is no more Item type but NSManagedObject because it comes from the DataModel by using codegen Class Definition
-                let newItem: Item = Item(context: self.context)
+                // To save items in the selectedCategory
+                guard let currentCategory = self.selectedCategory else {return}
                 
-                // Set the title of newItem as textField.text but it's an optional String then use gard let
-                guard let text = textField.text else {return}
+                do {
+                    
+                    /*
+                     write property performs actions contained within the given block inside a write transaction.
+                     .add()' method adds an unmanaged object to this Realm.
+                     It's a throw method so use the do try catch
+                     */
+                    try self.realm.write{
+                        // As we use Realm in order to save and create item
+                        let newItem = Item()
+                        
+                        // Set the title of newItem as textField.text but it's an optional String then use gard let
+                        guard let text = textField.text else {return}
+                        
+                        newItem.title = text
+                        
+                        // Every instance we create get stamp with the current date and time
+                        newItem.dateCreated = Date()
+                        
+                        /*
+                         items are the List<Item>
+                         .append(object:) method appends the given object to the end of the list.
+                         */
+                        currentCategory.items.append(newItem)
+                        
+                    }
+                    
+                } catch {
+                    
+                    print("Error saving Category to context, \(error) ")
+                }
                 
-                newItem.title = text
-                
-                // Set the done value to false by default because it's a required attribut
-                newItem.done = false
-                
-                // Set the parentCategory, which is the relationship between Item and Category, to the selectedCategory created/didset in TodoListViewController file and set in CategoryTableViewController file
-//                newItem.parentCategory = self.selectedCategory
-                
-                // Etablir une relation
-                self.selectedCategory?.addToItems(newItem)
-                
-                // Now we can push the newItem instance of Item containing the textField.text in title.
-                self.itemsArray.append(newItem)
-                
-                // Save the item title in NSPersistentContainer
-                self.saveItems()
             }
+            
+            /*
+                            ReloadData() call all datasource methods
+             
+             We need to reloadData of the tableview because the view is loaded before items are added to Realm, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
+             */
+            self.tableView.reloadData()
+            
         }
         
         // Add a text field to the alert
@@ -344,55 +369,56 @@ class TodoListViewController: UITableViewController {
 
 //MARK:- Search Bar Delegate Methods
 
+/* Here we gona QUERY data from Realm */
+
+
 // Add UISearchBarDelegate protocol to use search bar functions
 extension TodoListViewController: UISearchBarDelegate {
-        
+
     // SearchBarDelegate method telling the delegate that the search button was tapped by click on enter
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-
-        // To read the data from PersistentStore, we have to create request that is NSFetchRequest<Item> data type which allows to fetch the request of the Item.
-        let request: NSFetchRequest<Item> = Item.fetchRequest()
         
         /*
-         In order to query the NSPersistentStore, have to use NSPredicate(format: ,)
+         In order to query the Realm Database, have to use NSPredicate(format: ,)
          In the format by using "title CONTAINS %@" we are looking for the attribut title of each item and checking that it contains a value
          [cd] string comparaisons are set as case and diacritic insensitive.
          The value is the arguments that we are looking for and will replace %@ to have "title CONTAINS searchBarText
          Using guard let to avoid force unwrapping text
-         Assign predicate property of request as the predicate defined above
+         Add predicate argument to .filter() method which looking for NSPredicate
         */
         guard let searchBarText = searchBar.text else {return}
 
         let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBarText)
         
-        request.predicate = predicate
-        
         /*
-         Sort the data when it get back from the database and sort using the key as the "title" which is a property common to all the objects.
-         Assign sortDescriptors (actually plurial because it expects an array) property of request as an array of sortDescriptor defined above
+         Set todoItems to its previous value todoItems.filter() and sort it by .sorted() method
+         As we want on top the most recent item, set the ascending as true
          */
-        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        todoItems = todoItems?.filter(predicate).sorted(byKeyPath: "dateCreated", ascending: true)
+
+        /*
+                        ReloadData() call all datasource methods
+         
+         We need to reloadData of the tableview because the view is loaded before using predicate and .sorted(), so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes.
+        */
+        tableView.reloadData()
         
         /*
-         Now we need to fetch the request
-         Absolutely need the context to fetch the request from the persistent Store.
-         The method .fetch(request) returns an array of objects that respect predicate and sortDescriptors
-         We need to reloadData of the tableview because the view is loaded before done property change, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
-         Everything is done inside func loadItems()
-       */
+         We do not need to use loadItems() because we've already loaded todoItems from selectedCategory in func loadItems().
+         Here we simply filter this items
+        */
         
-        loadItems(with: request)
 
     }
-    
+
     // SearchBarDelegate method telling the delegate that the user change the search text
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         guard let searchBarText = searchBar.text else {return}
-        
+
         // Check if searchBar is empty equal to if we click on the cross button to delete the text in the searchBar
         if (searchBarText.count == 0) {
             loadItems()
-            
+
             /*
              It manages the execution of tasks serially or concurrently on our app's main thread or on a background thread.
              It's associated with the main thread of the current process.
@@ -405,9 +431,20 @@ extension TodoListViewController: UISearchBarDelegate {
                 */
                 searchBar.resignFirstResponder()
             }
+
+        } else {
             
+            // Each time we modify the text in the searchBar, the items are updated
+            
+            guard let searchBarText = searchBar.text else {return}
+
+            let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBarText)
+            
+            todoItems = todoItems?.filter(predicate).sorted(byKeyPath: "dateCreated", ascending: true)
+            
+            tableView.reloadData()
         }
-            
+
     }
 
 }

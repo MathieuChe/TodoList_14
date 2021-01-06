@@ -16,4 +16,8 @@ struct Constants {
         static let categoryToItemsSegue: String = "CategoryTableViewController"
         static let categoryReuseIdentifierCell: String = "CategoryTableViewCell"
     }
+    
+    struct TodoListController {
+        static let todoListReuseIdentifierCell: String = "TodoListViewCell"
+    }
 }
