@@ -139,7 +139,7 @@ class TodoListViewController: UITableViewController {
         if let item = todoItems?[indexPath.row] {
             do {
                 
-                // Save the item done property in Realm database
+                // Commit the item done property in Realm database with realm.write
                 try realm.write{
                     
                     // This single line replace the if condition, it's a toggle checkmark. They can only have two stats true or false then if we set true it becomes false cause the opposite, and if it's set to false it becomes true.
@@ -229,6 +229,7 @@ class TodoListViewController: UITableViewController {
             
             do {
                 
+                // realm.write allows to commit the changes in Realm database 
                 try realm.write{
                     
                     // .delete(_ object: ObjectBase) method deletes an object from the Realm. Once the object is deleted it is considered invalidated.
@@ -267,12 +268,13 @@ class TodoListViewController: UITableViewController {
             
             /* Here we gona CREATE and SAVE data to Realm */
             
-            // To save items in the selectedCategory
+            // To save items in the selectedCategory we are checking if selectedCategory is nil or not
             guard let currentCategory = self.selectedCategory else {return}
             
             do {
                 
                 /*
+                 realm.write allows to commit the changes in Realm database.
                  write property performs actions contained within the given block inside a write transaction.
                  .add()' method adds an unmanaged object to this Realm.
                  It's a throw method so use the do try catch

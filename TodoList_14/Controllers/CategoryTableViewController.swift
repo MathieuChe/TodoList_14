@@ -185,6 +185,7 @@ class CategoryTableViewController: UITableViewController {
             
             do {
                 
+                // realm.write allows to commit the changes in Realm database
                 try realm.write{
                     
                     // .delete(_ object: ObjectBase) method deletes an object from the Realm. Once the object is deleted it is considered invalidated.
@@ -236,9 +237,11 @@ class CategoryTableViewController: UITableViewController {
             
             
             /*
+             /!\ Really important to send informations from one view to another one
              After creating our selectedCategory property we assign the value of categoriesArray at the indexPath.row
              We had to didSet{} selectedCategory with loadItems() in TodoListViewController file
              We do not need to use a Nil Coalescing Operator because selectedCategory is already an optional Category data type in TodoListViewController file
+             selectedCategory get also Category properties as name and items
              */
             destinationViewController.selectedCategory = categoriesArray?[indexPath.row]
             
@@ -249,7 +252,7 @@ class CategoryTableViewController: UITableViewController {
     
     //MARK:- Data Manipulation methods
     
-    //MARK:- CoreData Save
+    //MARK:- Realm Save
     
     /* Here we gona SAVE data from Realm */
     
@@ -259,11 +262,13 @@ class CategoryTableViewController: UITableViewController {
         do {
             
             /*
+             realm.write allows to commit the changes in Realm database
              write property performs actions contained within the given block inside a write transaction.
              .add()' method adds an unmanaged object to this Realm.
              It's a throw method so use the do try catch
              */
             try realm.write{
+                
                 realm.add(category)
             }
             
@@ -280,7 +285,7 @@ class CategoryTableViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    //MARK:- CoreData Load
+    //MARK:- Realm Load
     
     /* Here we gona LOAD data from Realm */
     
