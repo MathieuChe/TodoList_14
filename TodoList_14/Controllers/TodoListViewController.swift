@@ -73,30 +73,6 @@ class TodoListViewController: UITableViewController {
         
     }
     
-    //MARK:- Realm Save
-    
-    //    func save(item: Item){
-    //
-    //        do {
-    //
-    //            /*
-    //             write property performs actions contained within the given block inside a write transaction.
-    //             .add()' method adds an unmanaged object to this Realm.
-    //             It's a throw method so use the do try catch
-    //             */
-    //            try realm.write{
-    //                realm.add(item)
-    //            }
-    //
-    //        } catch {
-    //
-    //            print("Error saving Category to context, \(error) ")
-    //        }
-    //
-    //        // We need to reloadData of the tableview because the view is loaded before done property change, so by clicking on the cell we can not see any changes. By reloading the tableview, this delegate method trigger directly and each time we do any changes
-    //        tableView.reloadData()
-    //    }
-    
     
     //MARK:- Realm Load
     
@@ -265,7 +241,8 @@ class TodoListViewController: UITableViewController {
         // Create an action as done button. It's the completion code when the Add Item button get pressed
         let saveAction: UIAlertAction = UIAlertAction(title: "Add Item", style: .default) { (action) in
             
-            
+            //MARK:- Realm Save
+
             /* Here we gona CREATE and SAVE data to Realm */
             
             // To save items in the selectedCategory we are checking if selectedCategory is nil or not
